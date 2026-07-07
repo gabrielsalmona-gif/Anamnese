@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a6b4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Anamnese Nutricional</title>
+<style>
+:root {
+  --green: #1a6b4a;
+  --green-mid: #2a8260;
+  --green-light: #e6f4ed;
+  --green-border: #9ecfb4;
+  --text: #16231d;
+  --text-sec: #3d5c4d;
+  --text-muted: #7a9e8c;
+  --bg: #f4f9f6;
+  --card: #ffffff;
+  --border: #d0e8da;
+  --radius: 14px;
+  --font: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--green);
+  padding: 14px 20px 10px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  flex-shrink: 0;
+  position: relative;
+}
+.topbar-row { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-icon { font-size: 20px; }
+.logo-text { font-size: 14px; font-weight: 600; color: white; letter-spacing: -0.2px; }
+.step-counter { font-size: 12px; color: rgba(255,255,255,0.7); }
+.progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 10px;
+  transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── SCREEN (one question at a time) ── */
+.screen {
+  display: none;
+  min-height: 100%;
+  padding: 24px 20px 120px;
+  animation: fadeUp 0.25s ease;
+}
+.screen.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── QUESTION HEADER ── */
+.q-category {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green-mid);
+  margin-bottom: 8px;
+}
+.q-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+  letter-spacing: -0.4px;
+  margin-bottom: 6px;
+}
+.q-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* ── INPUT STYLES ── */
+.input-text, .input-date, .input-select, .input-textarea {
+  width: 100%;
+  padding: 16px 16px;
+  font-size: 17px;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.input-text:focus, .input-date:focus, .input-select:focus, .input-textarea:focus {
+  border-color: var(--green-mid);
+}
+.input-textarea { min-height: 120px; resize: none; line-height: 1.5; }
+.input-text::placeholder, .input-textarea::placeholder { color: #b0c9bc; }
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+  display: block;
+}
+.input-group { margin-bottom: 16px; }
+
+/* ── CHIP OPTIONS (big, touch-friendly) ── */
+.chip-list { display: flex; flex-direction: column; gap: 10px; }
+.chip-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.chip-item:active { transform: scale(0.98); }
+.chip-item.sel-single {
+  background: var(--green-light);
+  border-color: var(--green-mid);
+}
+.chip-item.sel-multi {
+  background: var(--green-light);
+  border-color: var(--green-mid);
+}
+.chip-check {
+  width: 24px; height: 24px; min-width: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-size: 14px;
+}
+.chip-check.square { border-radius: 6px; }
+.chip-item.sel-single .chip-check,
+.chip-item.sel-multi .chip-check {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.chip-text { font-size: 16px; color: var(--text-sec); line-height: 1.3; }
+.chip-item.sel-single .chip-text,
+.chip-item.sel-multi .chip-text { color: var(--green); font-weight: 500; }
+
+/* horizontal chips (for short options) */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-pill {
+  padding: 10px 18px;
+  border: 2px solid var(--border);
+  border-radius: 30px;
+  font-size: 15px;
+  color: var(--text-sec);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.chip-pill:active { transform: scale(0.96); }
+.chip-pill.sel-single { background: var(--green); color: white; border-color: var(--green); }
+.chip-pill.sel-multi { background: var(--green-light); color: var(--green); border-color: var(--green-mid); font-weight: 500; }
+
+/* ── INLINE MULTI (smaller chips for symptom lists) ── */
+.chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.chip-tag {
+  padding: 9px 16px;
+  border: 2px solid var(--border);
+  border-radius: 30px;
+  font-size: 14px;
+  color: var(--text-sec);
+  background: var(--card);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.chip-tag:active { transform: scale(0.96); }
+.chip-tag.sel-multi { background: var(--green-light); color: var(--green); border-color: var(--green-mid); font-weight: 500; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  padding-bottom: calc(12px + var(--safe-bottom));
+  display: flex; gap: 10px; align-items: center;
+}
+.btn-back {
+  width: 52px; height: 52px; min-width: 52px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+  color: var(--text-sec);
+}
+.btn-back:active { background: var(--bg); transform: scale(0.95); }
+.btn-next {
+  flex: 1;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: var(--green);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: -0.2px;
+}
+.btn-next:active { background: var(--green-mid); transform: scale(0.98); }
+.btn-next.skip { background: var(--bg); color: var(--text-muted); border: 2px solid var(--border); font-weight: 400; }
+
+/* ── SECTION INTRO SCREEN ── */
+.intro-screen {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  padding: 48px 28px 120px;
+}
+.intro-icon {
+  width: 72px; height: 72px;
+  background: var(--green-light);
+  border-radius: 20px;
+  font-size: 36px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.intro-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+.intro-desc { font-size: 15px; color: var(--text-muted); line-height: 1.6; max-width: 300px; }
+.intro-steps { margin-top: 28px; width: 100%; text-align: left; }
+.intro-step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-sec);
+}
+.intro-step-num {
+  width: 28px; height: 28px; min-width: 28px;
+  background: var(--green-light);
+  color: var(--green);
+  border-radius: 50%;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── SUMMARY ── */
+.summary-screen { padding: 24px 20px 120px; }
+.summary-hero {
+  background: var(--green);
+  border-radius: 18px;
+  padding: 28px 22px;
+  text-align: center;
+  color: white;
+  margin-bottom: 20px;
+}
+.summary-hero .check { font-size: 48px; margin-bottom: 12px; }
+.summary-hero h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.summary-hero p { font-size: 14px; opacity: 0.8; margin-top: 6px; }
+.summary-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.summary-sec-title {
+  padding: 14px 18px;
+  font-size: 13px; font-weight: 600; color: var(--green);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.summary-row {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-key { color: var(--text-muted); font-size: 12px; margin-bottom: 2px; }
+.summary-val { color: var(--text); font-weight: 500; line-height: 1.4; }
+.btn-print {
+  width: 100%; height: 56px;
+  background: var(--green); color: white;
+  border: none; border-radius: var(--radius);
+  font-size: 17px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; margin-bottom: 10px; transition: all 0.15s;
+}
+.btn-print:active { background: var(--green-mid); }
+.btn-edit {
+  width: 100%; height: 52px;
+  background: white; color: var(--text-sec);
+  border: 2px solid var(--border); border-radius: var(--radius);
+  font-size: 16px; font-family: var(--font);
+  cursor: pointer; transition: all 0.15s;
+}
+
+/* ── DIVIDER / HELPER ── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+.helper { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+.auto-val {
+  background: var(--green-light);
+  border: 2px solid var(--green-border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--green);
+  text-align: center;
+}
+.auto-sub { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-top: 4px; }
+
+@media print {
+  .topbar, .bottom-nav { display: none !important; }
+  body, html { overflow: visible !important; height: auto !important; }
+  .scroll-area { overflow: visible !important; }
+  .screen { display: block !important; padding: 16px !important; }
+  .summary-screen { display: block !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="logo">
+      <span class="logo-icon">🥗</span>
+      <span class="logo-text">Anamnese Nutricional</span>
+    </div>
+    <span class="step-counter" id="step-counter">1 / 20</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+</div>
+
+<div class="scroll-area" id="scroll-area">
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 0 — INTRO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen active intro-screen" id="screen-0">
+  <div class="intro-icon">🥗</div>
+  <h1 class="intro-title">Olá! Bem-vindo(a)</h1>
+  <p class="intro-desc">Este formulário vai ajudar o nutricionista a conhecer melhor a sua saúde e alimentação.</p>
+  <div class="intro-steps">
+    <div class="intro-step"><div class="intro-step-num">1</div> Identificação e dados pessoais</div>
+    <div class="intro-step"><div class="intro-step-num">2</div> Saúde e histórico clínico</div>
+    <div class="intro-step"><div class="intro-step-num">3</div> Medicamentos e suplementos</div>
+    <div class="intro-step"><div class="intro-step-num">4</div> Hábitos alimentares</div>
+    <div class="intro-step"><div class="intro-step-num">5</div> Atividade física e sono</div>
+    <div class="intro-step"><div class="intro-step-num">6</div> Sintomas e bem-estar</div>
+    <div class="intro-step"><div class="intro-step-num">7</div> O que você comeu ontem</div>
+  </div>
+  <p class="helper" style="margin-top:20px; text-align:center;">Leva cerca de <strong>5 a 8 minutos</strong>. Suas respostas são confidenciais.</p>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 1 — NOME -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-1">
+  <div class="q-category">Identificação</div>
+  <h2 class="q-title">Qual é o seu nome completo?</h2>
+  <p class="q-sub">Como você gostaria de ser chamado(a) pelo nutricionista.</p>
+  <input class="input-text" type="text" id="nome" placeholder="Seu nome completo" autocomplete="name" autocapitalize="words">
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 2 — NASCIMENTO / SEXO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-2">
+  <div class="q-category">Identificação</div>
+  <h2 class="q-title">Data de nascimento e sexo</h2>
+  <div class="input-group">
+    <label class="input-label">Data de nascimento</label>
+    <input class="input-date" type="date" id="dnasc" onchange="calcIdade()">
+    <div class="auto-val" id="idade-box" style="display:none">
+      <span id="idade-val">—</span>
+      <div class="auto-sub">anos de idade</div>
+    </div>
+  </div>
+  <div class="input-group" style="margin-top:20px">
+    <label class="input-label">Sexo biológico</label>
+    <div class="chip-list" id="sexo-cg">
+      <div class="chip-item" onclick="single('sexo-cg',this)"><div class="chip-check">○</div><span class="chip-text">Masculino</span></div>
+      <div class="chip-item" onclick="single('sexo-cg',this)"><div class="chip-check">○</div><span class="chip-text">Feminino</span></div>
+      <div class="chip-item" onclick="single('sexo-cg',this)"><div class="chip-check">○</div><span class="chip-text">Prefiro não informar</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 3 — OCUPAÇÃO / CONTATO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-3">
+  <div class="q-category">Identificação</div>
+  <h2 class="q-title">Contato e ocupação</h2>
+  <div class="input-group">
+    <label class="input-label">Telefone / WhatsApp</label>
+    <input class="input-text" type="tel" id="tel" placeholder="(61) 9 0000-0000" autocomplete="tel">
+  </div>
+  <div class="input-group">
+    <label class="input-label">Ocupação / profissão</label>
+    <input class="input-text" type="text" id="ocup" placeholder="ex: professor, estudante, do lar..." autocapitalize="sentences">
+  </div>
+  <div class="input-group">
+    <label class="input-label">Quantas pessoas moram com você?</label>
+    <div class="chip-row" id="pessoas-cg">
+      <div class="chip-pill" onclick="singlePill('pessoas-cg',this)">Só eu</div>
+      <div class="chip-pill" onclick="singlePill('pessoas-cg',this)">1 pessoa</div>
+      <div class="chip-pill" onclick="singlePill('pessoas-cg',this)">2 pessoas</div>
+      <div class="chip-pill" onclick="singlePill('pessoas-cg',this)">3 pessoas</div>
+      <div class="chip-pill" onclick="singlePill('pessoas-cg',this)">4 ou mais</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 4 — MOTIVO DA CONSULTA -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-4">
+  <div class="q-category">Motivo da consulta</div>
+  <h2 class="q-title">Por que você veio até a consulta?</h2>
+  <p class="q-sub">Escreva com suas próprias palavras, sem pressa.</p>
+  <textarea class="input-textarea" id="queixa" placeholder='ex: "Estou com colesterol alto e quero melhorar minha alimentação..."'></textarea>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 5 — OBJETIVO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-5">
+  <div class="q-category">Motivo da consulta</div>
+  <h2 class="q-title">Qual é o seu principal objetivo?</h2>
+  <p class="q-sub">Escolha o que mais representa o que você quer alcançar.</p>
+  <div class="chip-list" id="obj-cg">
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Emagrecer / perder gordura</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Ganhar massa muscular</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Melhorar a saúde em geral</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Controlar diabetes ou glicemia</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Controlar colesterol ou pressão</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Ter mais energia e disposição</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Manter o peso atual</span></div>
+    <div class="chip-item" onclick="single('obj-cg',this)"><div class="chip-check">○</div><span class="chip-text">Outro</span></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 6 — DOENÇAS -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-6">
+  <div class="q-category">Histórico de saúde</div>
+  <h2 class="q-title">Você tem ou já teve alguma dessas doenças?</h2>
+  <p class="q-sub">Marque todas que se aplicam. Pode ser mais de uma.</p>
+  <div class="chip-wrap" id="doencas-cg">
+    <div class="chip-tag" onclick="multi(this)">Diabetes tipo 1</div>
+    <div class="chip-tag" onclick="multi(this)">Diabetes tipo 2</div>
+    <div class="chip-tag" onclick="multi(this)">Pré-diabetes</div>
+    <div class="chip-tag" onclick="multi(this)">Pressão alta</div>
+    <div class="chip-tag" onclick="multi(this)">Colesterol alto</div>
+    <div class="chip-tag" onclick="multi(this)">Triglicerídeos altos</div>
+    <div class="chip-tag" onclick="multi(this)">Obesidade</div>
+    <div class="chip-tag" onclick="multi(this)">Problema renal</div>
+    <div class="chip-tag" onclick="multi(this)">Problema hepático</div>
+    <div class="chip-tag" onclick="multi(this)">Problema cardíaco</div>
+    <div class="chip-tag" onclick="multi(this)">Hipotireoidismo</div>
+    <div class="chip-tag" onclick="multi(this)">Hipertireoidismo</div>
+    <div class="chip-tag" onclick="multi(this)">Anemia</div>
+    <div class="chip-tag" onclick="multi(this)">Doença celíaca</div>
+    <div class="chip-tag" onclick="multi(this)">Intestino irritável</div>
+    <div class="chip-tag" onclick="multi(this)">Refluxo / gastrite</div>
+    <div class="chip-tag" onclick="multi(this)">Câncer</div>
+    <div class="chip-tag" onclick="multi(this)">Depressão</div>
+    <div class="chip-tag" onclick="multi(this)">Ansiedade</div>
+  </div>
+  <div class="input-group" style="margin-top:16px">
+    <label class="input-label">Outra condição não listada</label>
+    <input class="input-text" type="text" id="outrasDoencas" placeholder="ex: fibromialgia, enxaqueca...">
+  </div>
+  <div class="chip-row" style="margin-top:8px" id="nenhuma-cg">
+    <div class="chip-pill" onclick="singlePill('nenhuma-cg',this)">✓ Nenhuma das acima</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 7 — MEDICAMENTOS -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-7">
+  <div class="q-category">Medicamentos</div>
+  <h2 class="q-title">Você usa medicamentos de uso contínuo?</h2>
+  <p class="q-sub">Remédios que toma todo dia ou com frequência.</p>
+  <div class="chip-list" id="usameds-cg">
+    <div class="chip-item" onclick="single('usameds-cg',this); showIf('meds-extra',this,'Sim, uso')"><div class="chip-check">○</div><span class="chip-text">Sim, uso</span></div>
+    <div class="chip-item" onclick="single('usameds-cg',this); showIf('meds-extra',this,'Sim, uso')"><div class="chip-check">○</div><span class="chip-text">Não uso</span></div>
+  </div>
+  <div id="meds-extra" style="display:none; margin-top:16px">
+    <label class="input-label">Quais? (nome e dose, se souber)</label>
+    <textarea class="input-textarea" id="meds" placeholder="ex: metformina 850mg 2x/dia, levotiroxina 50mcg pela manhã..."></textarea>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 8 — SUPLEMENTOS -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-8">
+  <div class="q-category">Suplementos</div>
+  <h2 class="q-title">Você usa algum suplemento ou vitamina?</h2>
+  <p class="q-sub">Marque todos que usa regularmente.</p>
+  <div class="chip-wrap" id="sups-cg">
+    <div class="chip-tag" onclick="multi(this)">Whey protein</div>
+    <div class="chip-tag" onclick="multi(this)">Creatina</div>
+    <div class="chip-tag" onclick="multi(this)">Vitamina D</div>
+    <div class="chip-tag" onclick="multi(this)">Vitamina C</div>
+    <div class="chip-tag" onclick="multi(this)">Complexo B</div>
+    <div class="chip-tag" onclick="multi(this)">Ômega-3</div>
+    <div class="chip-tag" onclick="multi(this)">Ferro</div>
+    <div class="chip-tag" onclick="multi(this)">Magnésio</div>
+    <div class="chip-tag" onclick="multi(this)">Colágeno</div>
+    <div class="chip-tag" onclick="multi(this)">Probiótico</div>
+    <div class="chip-tag" onclick="multi(this)">Multivitamínico</div>
+    <div class="chip-tag" onclick="multi(this)">Outro</div>
+  </div>
+  <div class="input-group" style="margin-top:14px">
+    <label class="input-label">Outros suplementos ou doses específicas</label>
+    <input class="input-text" type="text" id="outrosSup" placeholder="ex: vitamina D 5000UI, ZMA...">
+  </div>
+  <div class="chip-row" style="margin-top:4px" id="semsup-cg">
+    <div class="chip-pill" onclick="singlePill('semsup-cg',this)">✓ Não uso nenhum</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 9 — ÁLCOOL / TABACO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-9">
+  <div class="q-category">Estilo de vida</div>
+  <h2 class="q-title">Álcool e cigarro</h2>
+  <div class="input-group">
+    <label class="input-label">Você bebe bebidas alcoólicas?</label>
+    <div class="chip-list" id="alcool-cg">
+      <div class="chip-item" onclick="single('alcool-cg',this)"><div class="chip-check">○</div><span class="chip-text">Não consumo</span></div>
+      <div class="chip-item" onclick="single('alcool-cg',this)"><div class="chip-check">○</div><span class="chip-text">Raramente (datas especiais)</span></div>
+      <div class="chip-item" onclick="single('alcool-cg',this)"><div class="chip-check">○</div><span class="chip-text">Fim de semana</span></div>
+      <div class="chip-item" onclick="single('alcool-cg',this)"><div class="chip-check">○</div><span class="chip-text">Várias vezes por semana</span></div>
+      <div class="chip-item" onclick="single('alcool-cg',this)"><div class="chip-check">○</div><span class="chip-text">Todo dia</span></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="input-group">
+    <label class="input-label">Você fuma ou já fumou?</label>
+    <div class="chip-list" id="tabag-cg">
+      <div class="chip-item" onclick="single('tabag-cg',this)"><div class="chip-check">○</div><span class="chip-text">Nunca fumei</span></div>
+      <div class="chip-item" onclick="single('tabag-cg',this)"><div class="chip-check">○</div><span class="chip-text">Ex-fumante</span></div>
+      <div class="chip-item" onclick="single('tabag-cg',this)"><div class="chip-check">○</div><span class="chip-text">Fumante atual</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 10 — ALIMENTAÇÃO GERAL -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-10">
+  <div class="q-category">Alimentação</div>
+  <h2 class="q-title">Como é a sua alimentação?</h2>
+  <div class="input-group">
+    <label class="input-label">Quantas refeições você faz por dia?</label>
+    <div class="chip-row" id="ref-cg">
+      <div class="chip-pill" onclick="singlePill('ref-cg',this)">1–2</div>
+      <div class="chip-pill" onclick="singlePill('ref-cg',this)">3</div>
+      <div class="chip-pill" onclick="singlePill('ref-cg',this)">4–5</div>
+      <div class="chip-pill" onclick="singlePill('ref-cg',this)">6 ou mais</div>
+    </div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Quanto de água você bebe por dia?</label>
+    <div class="chip-list" id="agua-cg">
+      <div class="chip-item" onclick="single('agua-cg',this)"><div class="chip-check">○</div><span class="chip-text">Menos de 1 litro</span></div>
+      <div class="chip-item" onclick="single('agua-cg',this)"><div class="chip-check">○</div><span class="chip-text">1 a 1,5 litro</span></div>
+      <div class="chip-item" onclick="single('agua-cg',this)"><div class="chip-check">○</div><span class="chip-text">1,5 a 2 litros</span></div>
+      <div class="chip-item" onclick="single('agua-cg',this)"><div class="chip-check">○</div><span class="chip-text">Mais de 2 litros</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 11 — PREFERÊNCIAS ALIMENTARES -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-11">
+  <div class="q-category">Alimentação</div>
+  <h2 class="q-title">O que você gosta de comer?</h2>
+  <p class="q-sub">Alimentos que você consome com frequência e aprecia.</p>
+  <textarea class="input-textarea" id="alpref" placeholder="ex: arroz, feijão, frango, ovos, frutas, iogurte..."></textarea>
+  <div class="divider"></div>
+  <label class="input-label" style="font-size:16px; font-weight:600; color:var(--text)">O que você não gosta ou evita?</label>
+  <p style="font-size:14px; color:var(--text-muted); margin-bottom:12px;">Alimentos que evita, não tolera ou não gosta.</p>
+  <textarea class="input-textarea" id="alavers" placeholder="ex: peixes, fígado, brócolis, leite..."></textarea>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 12 — COMPORTAMENTO ALIMENTAR -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-12">
+  <div class="q-category">Alimentação</div>
+  <h2 class="q-title">Como você se comporta com a comida?</h2>
+  <div class="input-group">
+    <label class="input-label">Você costuma comer rápido?</label>
+    <div class="chip-list" id="veloc-cg">
+      <div class="chip-item" onclick="single('veloc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Sim, como muito rápido</span></div>
+      <div class="chip-item" onclick="single('veloc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Em ritmo normal</span></div>
+      <div class="chip-item" onclick="single('veloc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Devagar, mastico bem</span></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="input-group">
+    <label class="input-label">Você come por ansiedade, estresse ou tristeza?</label>
+    <div class="chip-list" id="emoc-cg">
+      <div class="chip-item" onclick="single('emoc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Nunca</span></div>
+      <div class="chip-item" onclick="single('emoc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Raramente</span></div>
+      <div class="chip-item" onclick="single('emoc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Com frequência</span></div>
+      <div class="chip-item" onclick="single('emoc-cg',this)"><div class="chip-check">○</div><span class="chip-text">Quase sempre</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 13 — ATIVIDADE FÍSICA -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-13">
+  <div class="q-category">Atividade física</div>
+  <h2 class="q-title">Como você se movimenta?</h2>
+  <div class="input-group">
+    <label class="input-label">Qual é o seu nível de atividade física?</label>
+    <div class="chip-list" id="naf-cg">
+      <div class="chip-item" onclick="single('naf-cg',this)"><div class="chip-check">○</div><span class="chip-text">Sedentário — fico sentado a maior parte do dia</span></div>
+      <div class="chip-item" onclick="single('naf-cg',this)"><div class="chip-check">○</div><span class="chip-text">Pouco ativo — caminhadas ou tarefas leves</span></div>
+      <div class="chip-item" onclick="single('naf-cg',this)"><div class="chip-check">○</div><span class="chip-text">Moderado — exercício 3x por semana</span></div>
+      <div class="chip-item" onclick="single('naf-cg',this)"><div class="chip-check">○</div><span class="chip-text">Muito ativo — exercício 5x ou mais por semana</span></div>
+      <div class="chip-item" onclick="single('naf-cg',this)"><div class="chip-check">○</div><span class="chip-text">Atleta — treinamento intenso diário</span></div>
+    </div>
+  </div>
+  <div class="input-group" style="margin-top:16px">
+    <label class="input-label">Qual exercício você pratica?</label>
+    <input class="input-text" type="text" id="exercicio" placeholder="ex: musculação 4x, caminhada 30min...">
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 14 — SONO E ESTRESSE -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-14">
+  <div class="q-category">Sono e estresse</div>
+  <h2 class="q-title">Como você dorme e como está seu estresse?</h2>
+  <div class="input-group">
+    <label class="input-label">Quantas horas você dorme por noite?</label>
+    <div class="chip-row" id="sono-cg">
+      <div class="chip-pill" onclick="singlePill('sono-cg',this)">menos de 5h</div>
+      <div class="chip-pill" onclick="singlePill('sono-cg',this)">5–6h</div>
+      <div class="chip-pill" onclick="singlePill('sono-cg',this)">6–7h</div>
+      <div class="chip-pill" onclick="singlePill('sono-cg',this)">7–8h</div>
+      <div class="chip-pill" onclick="singlePill('sono-cg',this)">mais de 8h</div>
+    </div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Como é a qualidade do seu sono?</label>
+    <div class="chip-list" id="qsono-cg">
+      <div class="chip-item" onclick="single('qsono-cg',this)"><div class="chip-check">○</div><span class="chip-text">Boa — acordo descansado(a)</span></div>
+      <div class="chip-item" onclick="single('qsono-cg',this)"><div class="chip-check">○</div><span class="chip-text">Regular — às vezes acordo cansado(a)</span></div>
+      <div class="chip-item" onclick="single('qsono-cg',this)"><div class="chip-check">○</div><span class="chip-text">Ruim — acordo cansado(a) com frequência</span></div>
+    </div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Seu nível de estresse no dia a dia</label>
+    <div class="chip-list" id="estresse-cg">
+      <div class="chip-item" onclick="single('estresse-cg',this)"><div class="chip-check">○</div><span class="chip-text">Baixo — me sinto tranquilo(a)</span></div>
+      <div class="chip-item" onclick="single('estresse-cg',this)"><div class="chip-check">○</div><span class="chip-text">Moderado — algum estresse no trabalho/casa</span></div>
+      <div class="chip-item" onclick="single('estresse-cg',this)"><div class="chip-check">○</div><span class="chip-text">Alto — estresso muito com frequência</span></div>
+      <div class="chip-item" onclick="single('estresse-cg',this)"><div class="chip-check">○</div><span class="chip-text">Muito alto — estou sobrecarregado(a)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 15 — SINTOMAS -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-15">
+  <div class="q-category">Sintomas</div>
+  <h2 class="q-title">Você costuma sentir algum desses sintomas?</h2>
+  <p class="q-sub">Marque todos que você experimenta com frequência.</p>
+  <div class="chip-wrap" id="sintomas-cg">
+    <div class="chip-tag" onclick="multi(this)">Náusea</div>
+    <div class="chip-tag" onclick="multi(this)">Vômito</div>
+    <div class="chip-tag" onclick="multi(this)">Prisão de ventre</div>
+    <div class="chip-tag" onclick="multi(this)">Diarreia frequente</div>
+    <div class="chip-tag" onclick="multi(this)">Barriga inchada</div>
+    <div class="chip-tag" onclick="multi(this)">Azia / refluxo</div>
+    <div class="chip-tag" onclick="multi(this)">Muitos gases</div>
+    <div class="chip-tag" onclick="multi(this)">Dor de barriga</div>
+    <div class="chip-tag" onclick="multi(this)">Cansaço excessivo</div>
+    <div class="chip-tag" onclick="multi(this)">Queda de cabelo</div>
+    <div class="chip-tag" onclick="multi(this)">Unhas quebradiças</div>
+    <div class="chip-tag" onclick="multi(this)">Pele ressecada</div>
+    <div class="chip-tag" onclick="multi(this)">Inchaço nos pés</div>
+    <div class="chip-tag" onclick="multi(this)">Cãibras</div>
+    <div class="chip-tag" onclick="multi(this)">Muita sede</div>
+    <div class="chip-tag" onclick="multi(this)">Muita fome</div>
+    <div class="chip-tag" onclick="multi(this)">Urinar muito</div>
+    <div class="chip-tag" onclick="multi(this)">Dificuldade de engolir</div>
+    <div class="chip-tag" onclick="multi(this)">Dor nas articulações</div>
+    <div class="chip-tag" onclick="multi(this)">Dor de cabeça frequente</div>
+  </div>
+  <div class="chip-row" style="margin-top:12px" id="semsint-cg">
+    <div class="chip-pill" onclick="singlePill('semsint-cg',this)">✓ Nenhum dos acima</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 16 — INTESTINO / CICLO -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-16">
+  <div class="q-category">Saúde digestiva</div>
+  <h2 class="q-title">Mais sobre sua saúde</h2>
+  <div class="input-group">
+    <label class="input-label">Com que frequência você evacua (vai ao banheiro)?</label>
+    <div class="chip-list" id="intesti-cg">
+      <div class="chip-item" onclick="single('intesti-cg',this)"><div class="chip-check">○</div><span class="chip-text">Mais de 1 vez por dia</span></div>
+      <div class="chip-item" onclick="single('intesti-cg',this)"><div class="chip-check">○</div><span class="chip-text">1 vez por dia</span></div>
+      <div class="chip-item" onclick="single('intesti-cg',this)"><div class="chip-check">○</div><span class="chip-text">A cada 2 dias</span></div>
+      <div class="chip-item" onclick="single('intesti-cg',this)"><div class="chip-check">○</div><span class="chip-text">A cada 3 dias ou mais</span></div>
+      <div class="chip-item" onclick="single('intesti-cg',this)"><div class="chip-check">○</div><span class="chip-text">Irregular, varia muito</span></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="input-group">
+    <label class="input-label">Você está grávida ou amamentando? (se aplicável)</label>
+    <div class="chip-list" id="grav-cg">
+      <div class="chip-item" onclick="single('grav-cg',this)"><div class="chip-check">○</div><span class="chip-text">Não se aplica</span></div>
+      <div class="chip-item" onclick="single('grav-cg',this)"><div class="chip-check">○</div><span class="chip-text">Estou grávida</span></div>
+      <div class="chip-item" onclick="single('grav-cg',this)"><div class="chip-check">○</div><span class="chip-text">Estou amamentando</span></div>
+      <div class="chip-item" onclick="single('grav-cg',this)"><div class="chip-check">○</div><span class="chip-text">Não</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 17 — RECORDATÓRIO: CAFÉ + LANCHE -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-17">
+  <div class="q-category">O que você comeu ontem</div>
+  <h2 class="q-title">Café da manhã e lanche da manhã</h2>
+  <p class="q-sub">Tente lembrar do dia de ontem. Inclua quantidade aproximada.</p>
+  <div class="input-group">
+    <label class="input-label">☀️ Café da manhã (que horas?)</label>
+    <input class="input-text" type="text" id="horCafe" placeholder="ex: 7h30" style="margin-bottom:8px">
+    <textarea class="input-textarea" id="cafe" placeholder="ex: 1 xícara de café com leite, 2 fatias de pão com margarina, 1 banana..."></textarea>
+  </div>
+  <div class="input-group">
+    <label class="input-label">🍎 Lanche da manhã</label>
+    <textarea class="input-textarea" id="lancheManha" placeholder='ex: 1 copo de suco, 1 barra de cereal — ou "não fiz lanche"'></textarea>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 18 — RECORDATÓRIO: ALMOÇO + TARDE -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-18">
+  <div class="q-category">O que você comeu ontem</div>
+  <h2 class="q-title">Almoço e lanche da tarde</h2>
+  <div class="input-group">
+    <label class="input-label">🍽️ Almoço (que horas?)</label>
+    <input class="input-text" type="text" id="horAlmoco" placeholder="ex: 12h30" style="margin-bottom:8px">
+    <textarea class="input-textarea" id="almoco" placeholder="ex: 1 prato de arroz, feijão, frango grelhado, salada de alface e tomate com azeite..."></textarea>
+  </div>
+  <div class="input-group">
+    <label class="input-label">🍌 Lanche da tarde</label>
+    <textarea class="input-textarea" id="lancheTarde" placeholder='ex: 1 iogurte e 1 maçã — ou "não fiz lanche"'></textarea>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 19 — RECORDATÓRIO: JANTAR + CEIA -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen" id="screen-19">
+  <div class="q-category">O que você comeu ontem</div>
+  <h2 class="q-title">Jantar e ceia</h2>
+  <div class="input-group">
+    <label class="input-label">🌙 Jantar (que horas?)</label>
+    <input class="input-text" type="text" id="horJantar" placeholder="ex: 19h00" style="margin-bottom:8px">
+    <textarea class="input-textarea" id="jantar" placeholder="ex: sopa de legumes com frango, 1 pão francês..."></textarea>
+  </div>
+  <div class="input-group">
+    <label class="input-label">🌛 Ceia / lanche noturno</label>
+    <textarea class="input-textarea" id="ceia" placeholder='ex: 1 copo de leite — ou "nada"'></textarea>
+  </div>
+  <div class="input-group" style="margin-top:8px">
+    <label class="input-label">Esse dia representou bem sua alimentação habitual?</label>
+    <div class="chip-list" id="tipico-cg">
+      <div class="chip-item" onclick="single('tipico-cg',this)"><div class="chip-check">○</div><span class="chip-text">Sim, é meu padrão normal</span></div>
+      <div class="chip-item" onclick="single('tipico-cg',this)"><div class="chip-check">○</div><span class="chip-text">Mais ou menos</span></div>
+      <div class="chip-item" onclick="single('tipico-cg',this)"><div class="chip-check">○</div><span class="chip-text">Não, foi um dia diferente</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TELA 20 — RESUMO FINAL -->
+<!-- ════════════════════════════════════════ -->
+<div class="screen summary-screen" id="screen-20">
+  <div class="summary-hero">
+    <div class="check">✅</div>
+    <h2>Anamnese concluída!</h2>
+    <p>Obrigado por responder. O nutricionista já pode acessar suas informações.</p>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">👤 Identificação</div>
+    <div class="summary-row"><div class="summary-key">Nome</div><div class="summary-val" id="s-nome">—</div></div>
+    <div class="summary-row"><div class="summary-key">Nascimento / Idade</div><div class="summary-val" id="s-idade">—</div></div>
+    <div class="summary-row"><div class="summary-key">Sexo</div><div class="summary-val" id="s-sexo">—</div></div>
+    <div class="summary-row"><div class="summary-key">Telefone</div><div class="summary-val" id="s-tel">—</div></div>
+    <div class="summary-row"><div class="summary-key">Ocupação</div><div class="summary-val" id="s-ocup">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">💬 Motivo e histórico</div>
+    <div class="summary-row"><div class="summary-key">Motivo da consulta</div><div class="summary-val" id="s-queixa">—</div></div>
+    <div class="summary-row"><div class="summary-key">Objetivo</div><div class="summary-val" id="s-obj">—</div></div>
+    <div class="summary-row"><div class="summary-key">Doenças</div><div class="summary-val" id="s-doencas">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">💊 Medicamentos</div>
+    <div class="summary-row"><div class="summary-key">Em uso</div><div class="summary-val" id="s-meds">—</div></div>
+    <div class="summary-row"><div class="summary-key">Suplementos</div><div class="summary-val" id="s-sups">—</div></div>
+    <div class="summary-row"><div class="summary-key">Álcool</div><div class="summary-val" id="s-alcool">—</div></div>
+    <div class="summary-row"><div class="summary-key">Tabaco</div><div class="summary-val" id="s-tabag">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">🍽️ Alimentação</div>
+    <div class="summary-row"><div class="summary-key">Refeições/dia</div><div class="summary-val" id="s-ref">—</div></div>
+    <div class="summary-row"><div class="summary-key">Água/dia</div><div class="summary-val" id="s-agua">—</div></div>
+    <div class="summary-row"><div class="summary-key">Preferências</div><div class="summary-val" id="s-alpref">—</div></div>
+    <div class="summary-row"><div class="summary-key">Evita</div><div class="summary-val" id="s-alavers">—</div></div>
+    <div class="summary-row"><div class="summary-key">Come rápido?</div><div class="summary-val" id="s-veloc">—</div></div>
+    <div class="summary-row"><div class="summary-key">Come por emoção?</div><div class="summary-val" id="s-emoc">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">🏃 Atividade física e rotina</div>
+    <div class="summary-row"><div class="summary-key">Nível de atividade</div><div class="summary-val" id="s-naf">—</div></div>
+    <div class="summary-row"><div class="summary-key">Exercício</div><div class="summary-val" id="s-exercicio">—</div></div>
+    <div class="summary-row"><div class="summary-key">Sono</div><div class="summary-val" id="s-sono">—</div></div>
+    <div class="summary-row"><div class="summary-key">Qualidade do sono</div><div class="summary-val" id="s-qsono">—</div></div>
+    <div class="summary-row"><div class="summary-key">Estresse</div><div class="summary-val" id="s-estresse">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">🩺 Sintomas</div>
+    <div class="summary-row"><div class="summary-key">Sintomas relatados</div><div class="summary-val" id="s-sintomas">—</div></div>
+    <div class="summary-row"><div class="summary-key">Intestino</div><div class="summary-val" id="s-intesti">—</div></div>
+  </div>
+
+  <div class="summary-section">
+    <div class="summary-sec-title">📋 Recordatório 24h</div>
+    <div class="summary-row"><div class="summary-key">Café da manhã</div><div class="summary-val" id="s-cafe">—</div></div>
+    <div class="summary-row"><div class="summary-key">Almoço</div><div class="summary-val" id="s-almoco">—</div></div>
+    <div class="summary-row"><div class="summary-key">Jantar</div><div class="summary-val" id="s-jantar">—</div></div>
+    <div class="summary-row"><div class="summary-key">Dia típico?</div><div class="summary-val" id="s-tipico">—</div></div>
+  </div>
+
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / salvar PDF</button>
+  <button class="btn-edit" onclick="goTo(1)">← Editar respostas</button>
+</div>
+
+</div><!-- end scroll-area -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <button class="btn-back" id="btn-back" onclick="back()" style="display:none">←</button>
+  <button class="btn-next" id="btn-next" onclick="next()">Começar →</button>
+</div>
+
+<script>
+let cur = 0;
+const TOTAL = 20;
+
+function goTo(n) {
+  document.getElementById('screen-' + cur).classList.remove('active');
+  cur = n;
+  document.getElementById('screen-' + cur).classList.add('active');
+  document.getElementById('scroll-area').scrollTop = 0;
+
+  // progress
+  const pct = cur === 0 ? 0 : Math.round((cur / TOTAL) * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('step-counter').textContent = cur === 0 ? '' : cur + ' / ' + TOTAL;
+
+  // back button
+  document.getElementById('btn-back').style.display = cur > 0 ? 'flex' : 'none';
+
+  // next button label
+  const btn = document.getElementById('btn-next');
+  if(cur === 0) { btn.textContent = 'Começar →'; btn.className = 'btn-next'; }
+  else if(cur === TOTAL) { btn.style.display = 'none'; document.getElementById('btn-back').style.display='none'; fillSummary(); }
+  else if(cur === TOTAL - 1) { btn.textContent = 'Ver resumo →'; btn.className = 'btn-next'; }
+  else { btn.textContent = 'Próximo →'; btn.className = 'btn-next'; }
+
+  if(cur === TOTAL) document.getElementById('bottom-nav').style.display = 'none';
+  else document.getElementById('bottom-nav').style.display = 'flex';
+}
+
+function next() { if(cur < TOTAL) goTo(cur + 1); }
+function back() { if(cur > 0) goTo(cur - 1); }
+
+function single(groupId, el) {
+  document.querySelectorAll('#' + groupId + ' .chip-item').forEach(c => c.classList.remove('sel-single'));
+  el.classList.add('sel-single');
+  el.querySelector('.chip-check').textContent = '✓';
+  document.querySelectorAll('#' + groupId + ' .chip-item:not(.sel-single) .chip-check').forEach(c => c.textContent = '○');
+}
+
+function singlePill(groupId, el) {
+  document.querySelectorAll('#' + groupId + ' .chip-pill').forEach(c => c.classList.remove('sel-single'));
+  el.classList.add('sel-single');
+}
+
+function multi(el) { el.classList.toggle('sel-multi'); }
+
+function showIf(targetId, el, trigger) {
+  const box = document.getElementById(targetId);
+  if(el.querySelector('.chip-text').textContent.trim() === trigger) {
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function calcIdade() {
+  const val = document.getElementById('dnasc').value;
+  if(!val) return;
+  const hoje = new Date();
+  const nasc = new Date(val);
+  let anos = hoje.getFullYear() - nasc.getFullYear();
+  const m = hoje.getMonth() - nasc.getMonth();
+  if(m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) anos--;
+  const box = document.getElementById('idade-box');
+  document.getElementById('idade-val').textContent = anos;
+  box.style.display = 'block';
+}
+
+function getS(id) { const el = document.getElementById(id); return el ? (el.value.trim() || '—') : '—'; }
+function getSingle(gId) {
+  const el = document.querySelector('#' + gId + ' .sel-single .chip-text');
+  return el ? el.textContent.trim() : '—';
+}
+function getSinglePill(gId) {
+  const el = document.querySelector('#' + gId + ' .sel-single');
+  return el ? el.textContent.trim() : '—';
+}
+function getMulti(gId) {
+  const els = document.querySelectorAll('#' + gId + ' .sel-multi');
+  return els.length ? [...els].map(e => e.textContent.trim()).join(', ') : '—';
+}
+
+function fillSummary() {
+  document.getElementById('s-nome').textContent = getS('nome');
+  const dnasc = getS('dnasc');
+  const idadeVal = document.getElementById('idade-val').textContent;
+  document.getElementById('s-idade').textContent = dnasc + (idadeVal ? ' (' + idadeVal + ' anos)' : '');
+  document.getElementById('s-sexo').textContent = getSingle('sexo-cg');
+  document.getElementById('s-tel').textContent = getS('tel');
+  document.getElementById('s-ocup').textContent = getS('ocup');
+  document.getElementById('s-queixa').textContent = getS('queixa');
+  document.getElementById('s-obj').textContent = getSingle('obj-cg');
+  const doencas = getMulti('doencas-cg');
+  const outrasD = getS('outrasDoencas');
+  document.getElementById('s-doencas').textContent = doencas !== '—' ? doencas + (outrasD !== '—' ? ', ' + outrasD : '') : outrasD;
+  document.getElementById('s-meds').textContent = getS('meds') !== '—' ? getS('meds') : getSingle('usameds-cg');
+  const sups = getMulti('sups-cg');
+  const outrosSup = getS('outrosSup');
+  document.getElementById('s-sups').textContent = sups !== '—' ? sups + (outrosSup !== '—' ? ', ' + outrosSup : '') : outrosSup;
+  document.getElementById('s-alcool').textContent = getSingle('alcool-cg');
+  document.getElementById('s-tabag').textContent = getSingle('tabag-cg');
+  document.getElementById('s-ref').textContent = getSinglePill('ref-cg');
+  document.getElementById('s-agua').textContent = getSingle('agua-cg');
+  document.getElementById('s-alpref').textContent = getS('alpref');
+  document.getElementById('s-alavers').textContent = getS('alavers');
+  document.getElementById('s-veloc').textContent = getSingle('veloc-cg');
+  document.getElementById('s-emoc').textContent = getSingle('emoc-cg');
+  document.getElementById('s-naf').textContent = getSingle('naf-cg');
+  document.getElementById('s-exercicio').textContent = getS('exercicio');
+  document.getElementById('s-sono').textContent = getSinglePill('sono-cg');
+  document.getElementById('s-qsono').textContent = getSingle('qsono-cg');
+  document.getElementById('s-estresse').textContent = getSingle('estresse-cg');
+  document.getElementById('s-sintomas').textContent = getMulti('sintomas-cg');
+  document.getElementById('s-intesti').textContent = getSingle('intesti-cg');
+  document.getElementById('s-cafe').textContent = getS('cafe');
+  document.getElementById('s-almoco').textContent = getS('almoco');
+  document.getElementById('s-jantar').textContent = getS('jantar');
+  document.getElementById('s-tipico').textContent = getSingle('tipico-cg');
+}
+</script>
+</body>
+</html>
